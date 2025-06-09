@@ -1,11 +1,11 @@
 package;
 
-import flixel.system.FlxAssets.FlxGraphicAsset;
-import flixel.FlxG;
-import flixel.graphics.FlxGraphic;
 import flixel.graphics.frames.FlxFramesCollection;
+import flixel.graphics.FlxGraphic;
+import flixel.system.FlxAssets.FlxGraphicAsset;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
+import flixel.FlxG;
 
 using StringTools;
 
@@ -30,7 +30,7 @@ class FunkyFrames extends FlxFramesCollection {
             var rect:FlxRect = FlxRect.get((graphic.width / divisions) * i, 0, graphic.width / divisions, graphic.height);
             var size:FlxRect = FlxRect.get(0, 0, rect.width, rect.height);
             var sourceSize = FlxPoint.get(size.width, size.height);
-            trace('[FRAMES] added frame $animName$increment');
+            //trace('[FRAMES] (anim $animName) added frame $increment');
             increment++;
 
             frames.addAtlasFrame(rect, sourceSize, FlxPoint.get(0, 0), name, 0, false, false);
@@ -39,6 +39,7 @@ class FunkyFrames extends FlxFramesCollection {
         return frames;
     }
 
+    //functions taken from flxatlasframe bc im dumb and lazy
     public function addAtlas(collection:FunkyFrames, overwriteHash = false) {
 		for (frame in collection.frames)
 			pushFrame(frame, overwriteHash);
@@ -51,8 +52,7 @@ class FunkyFrames extends FlxFramesCollection {
 		return this;
 	}
 
-    override function destroy()
-	{
+    override function destroy() {
 		while (usedGraphics.length > 0)
 			usedGraphics.shift().decrementUseCount();
 		
