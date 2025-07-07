@@ -1,5 +1,5 @@
 # Funky Maker: Player!
-An attempt of porting/recreating [Funky Maker: Mobile!](https://play.google.com/store/apps/details?id=com.kingamescreator.fnmm) on HaxeFlixel
+An attempt of porting/recreating [Funky Maker: Mobile!](https://play.google.com/store/apps/details?id=com.kingamescreator.fnmm) to desktop on HaxeFlixel
 
 ## todo
 - [ ] better asset loading
