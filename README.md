@@ -3,6 +3,7 @@ An attempt of porting/recreating [Funky Maker: Mobile!](https://play.google.com/
 
 ## todo
 - [ ] better asset loading
+- [ ] fix sprite offsets when scale is any other than 1.0 
 - [x] bpm logic
 - [x] events
 - [ ] actual gameplay
