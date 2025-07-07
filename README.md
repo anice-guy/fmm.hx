@@ -3,6 +3,8 @@ An attempt of porting/recreating [Funky Maker: Mobile!](https://play.google.com/
 
 ## todo
 - [ ] better asset loading
+- [ ] fix zoom being weird idk
+- [ ] set camera to id 1 on song start (or 0 if theres only one)
 - [ ] fix sprite offsets when scale is any other than 1.0 
 - [x] bpm logic
 - [x] events
