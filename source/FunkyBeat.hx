@@ -8,22 +8,26 @@ import flixel.util.FlxSignal;
 */
 
 class FunkyBeat {
-    public var bpm(set, never):Int = 100;
-    public var crochet:Float = ((60 / bpm) * 1000);
-    public var stepCrochet:Float = crochet / 4;
-    public var songPos:Float;
+    public static var bpm:Int = 0;
+    public static var crochet:Float = 0;
+    public static var stepCrochet:Float = 0;
+    public static var songPos:Float;
 
-	public var onBeatHit:FlxSignal = new FlxSignal();
-	public var onStepHit:FlxSignal = new FlxSignal();
-	public var onSectionHit:FlxSignal = new FlxSignal();
+	public static var curStep:Int;
+	public static var curBeat:Int;
 
-    function set_bpm(newBpm:Int) {
+	public static var onBeatHit:FlxSignal = new FlxSignal();
+	public static var onStepHit:FlxSignal = new FlxSignal();
+	public static var onSectionHit:FlxSignal = new FlxSignal();
+
+    public static function init(newBpm:Int) {
         bpm = newBpm;
 		crochet = ((60 / bpm) * 1000);
 		stepCrochet = crochet / 4;
+		trace('[BPM] INIT bpm: $bpm | crochet: $crochet');
     }
 
-    public function update(pos:Float) {
+    public static function update(pos:Float) {
 		var oldStep:Int = curStep;
 		songPos = pos;
 
@@ -35,23 +39,23 @@ class FunkyBeat {
 
 	}
 
-	private function updateBeat():Void
+	private static function updateBeat():Void
 		curBeat = Math.floor(curStep / 4);
 
-	private function updateCurStep(pos:Float):Void
+	private static function updateCurStep(pos:Float):Void
 		curStep = Math.floor(pos / stepCrochet);
 
-	private function _onStep():Void {
+	private static function _onStep():Void {
 		onStepHit.dispatch();
 		if (curStep % 4 == 0) _onBeat();
 	}
 
-	private function _onBeat():Void {
+	private static function _onBeat():Void {
 		onBeatHit.dispatch();
         if (curBeat % 4 == 0) _onSection();
 	}
 
-    private function _onSection():Void
+    private static function _onSection():Void
 		onSectionHit.dispatch();
 
 }

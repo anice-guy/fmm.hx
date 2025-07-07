@@ -1,9 +1,7 @@
 package;
 
-import sys.io.File;
 import flixel.FlxSprite;
 import FunkyAssets;
-import haxe.Json;
 
 class FunkySprite extends FlxSprite {
     var animOffsets:Array<Array<Float>>;
@@ -11,20 +9,22 @@ class FunkySprite extends FlxSprite {
     var animData:Array<Dynamic>;
 
     var name:String;
+    public var type:Int;
     var baseScale:Float;
 
-    public function new(name:String, x:Float = 0, y:Float = 0, scale:Float = 1) {
+    public function new(name:String, x:Float = 0, y:Float = 0, scale:Float = 1, ?bpm:Int = 100) {
         super(x, y);
         animOffsets = new Array<Array<Float>>();
         animScales = new Array<Null<Float>>();
         this.name = name;
         this.baseScale = scale;
 
-        var json = FunkyAssets.levelJson('sprites/$name/sprite', PlayState.levelName);
-        changeSprite(json, name);
+        var json = FunkyAssets.levelJson('sprites/$name/sprite');
+        changeSprite(json, name, bpm);
     }
 
-    public function changeSprite(json:Dynamic, name:String) {
+    private var _frameCount:Map<Int, Int> = new Map<Int, Int>();
+    public function changeSprite(json:Dynamic, name:String, ?bpm:Int = 100) {
         animOffsets = [];
         animScales = [];
 
@@ -33,26 +33,27 @@ class FunkySprite extends FlxSprite {
 
         animData = json.data;
         if(animData != null && animData.length > 0) {
-            var _frames = FunkyAssets.spritesheet('$name/0', '0', Std.int(animData[0].num), true, PlayState.levelName);
+            var _frames = FunkyAssets.spritesheet('$name/0', '0', Std.int(animData[0].num), true);
             for (i=>anim in animData) {
                 if (i > 0) {
                     var original:FunkyFrames = _frames;
                     _frames = new FunkyFrames(_frames.parent);
                     _frames.addAtlas(original, true);
-                    var extraFrames:FunkyFrames = FunkyAssets.spritesheet('$name/$i', Std.string(i), Std.int(anim.num), true, PlayState.levelName);
+                    var extraFrames:FunkyFrames = FunkyAssets.spritesheet('$name/$i', Std.string(i), Std.int(anim.num), true);
                     if(extraFrames != null)
                         _frames.addAtlas(extraFrames, true);
                 }
+                _frameCount.set(i, Std.int(anim.num));
             }
             frames = _frames;
             for (i=>anim in animData) {
                 var animName = Std.string(i);
-                var fps = 24;
+                var fps:Float = 24;
                 addOffset(anim.offset.x, anim.offset.y);
                 addScale(anim.scale);
 
-                if (anim.spd_fps)
-                    fps = anim.spd;
+                if (anim.spd_fps) fps = anim.spd;
+                else fps = (_frameCount.get(i) * bpm / 60) / anim.spd;
                 animation.addByPrefix(animName, animName, fps, anim.loop);
             }
         }

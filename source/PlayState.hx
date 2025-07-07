@@ -1,5 +1,7 @@
 package;
 
+import flixel.util.FlxSort;
+import flixel.math.FlxMath;
 import flixel.FlxObject;
 import flixel.sound.FlxSound;
 import flixel.FlxState;
@@ -12,77 +14,195 @@ import haxe.Json;
 
 class PlayState extends FlxState {
 	public static var levelName:String;
-	var spriteMap:Map<String, FunkySprite> = new Map<String, FunkySprite>();
+	var spriteMap:Map<Int, FunkySprite> = new Map<Int, FunkySprite>();
 	var levelSong:FlxSound;
 	var camFollow:FlxObject;
 
 	var levelObjs:Array<Dynamic>;
 	var levelCams:Array<Dynamic>;
+	var levelChart:Dynamic;
+	var levelEvents:Dynamic;
+	var songNotes:Dynamic = [];
+	var songEvents:Dynamic = [];
 
 	override public function create() {
 		super.create();
+		FlxG.camera.bgColor = 0; //trans
 
 		levelName = File.getContent('curLevel.txt');
+		FunkyAssets.loadLevelData(levelName);
 
-		var _scene = FunkyAssets.levelJson('scene', levelName);
-		var chart = FunkyAssets.levelJson('data', levelName);
+		var _scene = FunkyAssets.sceneData;
+		levelChart = FunkyAssets.chartData;
+		levelEvents = FunkyAssets.eventData;
 		levelObjs = _scene.objects;
 		levelCams = _scene.cameras;
 
 		levelSong = new FlxSound();
-		levelSong.loadEmbedded(FunkyAssets.levelSong(levelName));
+		levelSong.loadEmbedded(FunkyAssets.lvlMusic);
 		FlxG.sound.list.add(levelSong);
 
+		FunkyBeat.init(levelChart.bpm);
+		FunkyBeat.onSectionHit.add(onSectionHit);
+
+		var increment:Int = 0;
 		for (sprite in levelObjs) {
-			var fsprite:FunkySprite = new FunkySprite(sprite.spr, sprite.x, sprite.y);
+			var fsprite:FunkySprite = new FunkySprite(sprite.spr, sprite.x, sprite.y, sprite.scale.x, levelChart.bpm);
 			fsprite.visible = sprite.visible;
+			fsprite.type = sprite.type;
 			fsprite.playAnim(0);
-			spriteMap.set(sprite.spr, fsprite);
+			spriteMap.set(increment, fsprite);
 			add(fsprite);
-			trace('[STAGE] added sprite "${sprite.spr}" (x: ${sprite.x}, y: ${sprite.y})');
+			increment++;
+			trace('[STAGE] added sprite "${sprite.spr}" (x: ${sprite.x}, y: ${sprite.y}, type: ${sprite.type})');
 		}
+
+		for (dir in 0...4)
+			for (note in 0...Std.int(levelChart.notes[dir].length))
+				reparseNote(levelChart.notes[dir][note].start, dir, false);
+
+		for (dir in 4...8)
+			for (note in 0...Std.int(levelChart.notes[dir].length))
+				reparseNote(levelChart.notes[dir][note].start, dir-4, true);
+
+		songNotes.sort(function(p1, p2) {
+			return FlxSort.byValues(FlxSort.ASCENDING, p1.strumTime, p2.strumTime);
+		});
 
 		camFollow = new FlxObject(0, 0, 1, 1);
 		add(camFollow);
-		FlxG.camera.follow(camFollow);
+		FlxG.camera.follow(camFollow, LOCKON, 0.04);
 		FlxG.worldBounds.set(0, 0, FlxG.width, FlxG.height);
 		camFollow.setPosition(levelCams[0].x, levelCams[0].y);
+
+		if (songNotes.length < 1) noteCheck();
 	}
 
-	var key:Int = 1;
+	private function reparseNote(time:Float, id:Int, ms:Bool) {
+		var parsed = {
+			strumTime: time * 1000,
+			id: id,
+			mustHit: ms
+		};
+		songNotes.push(parsed);
+	}
+
+
+	public function onSectionHit() {
+		FlxG.camera.zoom += 0.015;
+	}
+
+	function playAnimType(type, anim) {
+		for (sprite in spriteMap) {
+			if (sprite.type == type)
+				sprite.playAnim(anim);
+		}
+	}
+
+	private function noteHit(note)
+		playAnimType(1,note.id+1); 
+
+	private function oppHit(note)
+		playAnimType(2,note.id+1); 
+
+	private function noteCheck() {
+		while(songNotes.length > 0) {
+			var leStrumTime:Float = songNotes[0].strumTime;
+			if(FunkyBeat.songPos < leStrumTime) 
+				return;
+
+			if (songNotes[0].mustHit)
+					noteHit(songNotes[0]);
+				else
+					oppHit(songNotes[0]);
+			songNotes.shift();
+		}
+	}
+
+	private function eventCheck() {
+		while(levelEvents.length > 0) {
+			var leStrumTime:Float = levelEvents[0].time * 1000;
+			if(FunkyBeat.songPos < leStrumTime) 
+				return;
+
+			executeEvent(levelEvents[0].type, levelEvents[0].args);
+			levelEvents.shift();
+		}
+	}
+
+	private function executeEvent(type:String, args:Array<String>) {
+		trace('executing event ${type} ${args}');
+		switch (type) {
+			case 'flash':
+				FlxG.camera.flash(0x33FFFFFF, 1);
+			case 'shake':
+				FlxG.camera.shake(0.003, (FunkyBeat.crochet/1000));
+			case 'camera':
+				switch (args[0]) {
+					case 'auto':
+						//none yet
+					case 'left':
+						camFollow.setPosition(levelCams[0].x, levelCams[0].y);
+						lvlzoom = (1-(levelCams[0].scale-1));
+					case 'right':
+						camFollow.setPosition(levelCams[1].x, levelCams[1].y);
+						lvlzoom = (1-(levelCams[1].scale-1));
+					default:
+						camFollow.setPosition(levelCams[Std.parseInt(args[0])].x, levelCams[Std.parseInt(args[0])].y);
+						lvlzoom = (1-(levelCams[Std.parseInt(args[0])].scale-1));
+				}
+
+			case 'changesprite':
+				var json = FunkyAssets.levelJson('sprites/${args[1]}/sprite');
+				var id:Int = Std.parseInt(args[0]);
+				if (spriteMap.exists(id)) spriteMap.get(id).changeSprite(json, args[1], levelChart.bpm);
+				else trace('sprite $id doesnt exist wtffff');
+
+			case 'changetype':
+				var id:Int = Std.parseInt(args[0]);
+				if (spriteMap.exists(id)) spriteMap.get(id).type = Std.parseInt(args[1]);
+				else trace('sprite $id doesnt exist wtffff');
+
+			case 'changeanim':
+				var id:Int = Std.parseInt(args[0]);
+				if (spriteMap.exists(id)) spriteMap.get(id).playAnim(Std.parseInt(args[1]));
+				else trace('sprite $id doesnt exist wtffff');
+
+			case 'visible':
+				var id:Int = Std.parseInt(args[0]);
+				if (spriteMap.exists(id)) {
+					spriteMap.get(id).visible = (args[1] == 'yes');
+					trace(args[1] == 'yes');
+				} else trace('sprite $id doesnt exist wtffff');
+
+			default:
+				trace('unimplemented event $type');
+		}
+	}
+
 	var cam:Int = 0;
+	var lvlzoom:Float = 1;
+
 	override public function update(elapsed:Float) {
 		super.update(elapsed);
-		
-		/*var _scale:Float = 1;
-		_scale = Math.max(FlxG.camera.viewHeight / 1080, FlxG.camera.viewWidth / 1920);
-		FlxG.camera.zoom = _scale;*/
 
+		FlxG.camera.zoom = FlxMath.lerp(FlxG.camera.zoom, lvlzoom, 0.05);
+		if (FlxG.sound.music != null)
+			FunkyBeat.update(FlxG.sound.music.time);
+
+		noteCheck();
+		eventCheck();
+
+		//EVERYTHING BELOW THIS LINE IS JUST FOR TESTING PURPOSES
 		if (FlxG.keys.justPressed.C) {
 			if (cam == 0) cam = 1 else cam = 0;
 			if (levelCams[cam] != null) camFollow.setPosition(levelCams[cam].x, levelCams[cam].y);
+			lvlzoom = (1-(levelCams[cam].scale-1));
+			trace(lvlzoom);
 		}
-
-		var testSprite = spriteMap.get('player');
 
 		if (FlxG.keys.justPressed.SPACE)
 			@:privateAccess
 			FlxG.sound.playMusic(levelSong._sound);
-
-		//testin
-		//random anim
-		if (FlxG.keys.justPressed.R) {
-			key = FlxG.random.int(1,4, [key]);
-			testSprite.playAnim(key);
-		}
-		//same anim
-		if (FlxG.keys.justPressed.P)
-			testSprite.playAnim(key);
-		//idle
-		if (FlxG.keys.justPressed.I)
-			testSprite.playAnim(0);
-		//miss
-		if (FlxG.keys.justPressed.M)
-			testSprite.playAnim(5);
 	}
 }

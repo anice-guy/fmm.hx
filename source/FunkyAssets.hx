@@ -11,47 +11,40 @@ import sys.FileSystem;
 using StringTools;
 
 class FunkyAssets {
-    var sprites:Map<String, FlxGraphic>;
-    var chartData:Dynamic;
-    var sceneData:Dynamic;
-    var eventData:Dynamic;
-    var music:Sound;
-    var level:String;
+    public static var sprites:Map<String, FlxGraphic>;
+    public static var chartData:Dynamic = [];
+    public static var sceneData:Dynamic = [];
+    public static var eventData:Dynamic = [];
+    public static var lvlMusic:Sound;
+    public static var level:String;
 
-    public static function loadLevel(lvl:String):Void {
-        chartData = levelJson('data');
+    public static function loadLevelData(lvl:String):Void {
         level = lvl;
+        chartData = levelJson('data');
+        sceneData = levelJson('scene');
+        if (FileSystem.exists(getPath('evt.json', true)))
+            eventData = levelJson('evt');
+
+        lvlMusic = returnSound('music', true);
     }
 
-    public static function getPath(file:String = ''):String {
-        var request:String = 'assets/';
-        request = 'assets/$file';
-        trace('[ASSETS] loading: $request');
-        return request;
+    public static function getPath(key:String = '', ?isLvl:Bool = false):String {
+        if (isLvl) 
+            return 'levels/$level/$key';
+
+        return 'assets/$key';
     }
 
-    //welcome to level district
-    public static function buildLevelPath(key:String, level:String) {
-        return 'levels/$level/$key';
-    }
+    public static function levelImage(key:String):FlxGraphic
+        return returnImage('sprites/$key', true);
 
-    public static function levelImage(key:String, level:String):FlxGraphic
-        return returnImage(key, true, level);
-
-    public static function levelSpriteJson(key:String, level:String):String
-        return buildLevelPath('sprites/$key/sprite.json', level);
-
-    public static function levelJson(key:String, level:String):Dynamic {
-        var raw:String = File.getContent(buildLevelPath('$key.json', level));
+    public static function levelJson(key:String):Dynamic {
+        var raw:String = File.getContent(getPath('$key.json', true));
         return Json.parse(raw);
     }
 
-    //next stop is boring built-in assets
     public static function file(file:String):String
         return getPath(file);
-
-    public static function sound(key:String):Sound
-        return returnSound('sounds/$key');
 
     public static function music(key:String):Sound
         return returnSound('music/$key');
@@ -59,18 +52,16 @@ class FunkyAssets {
     public static function image(key:String):FlxGraphic
         return returnImage('images/$key');
 
-    static public function spritesheet(key:String, anim:String, div:Int, fromLevel:Bool = false, ?level:String = ''):FunkyFrames {
+    static public function spritesheet(key:String, anim:String, div:Int, fromLevel:Bool = false):FunkyFrames {
 		var imageLoaded:FlxGraphic = null;
-        if (fromLevel) imageLoaded = levelImage(key, level);
+        if (fromLevel) imageLoaded = levelImage(key);
         else image(key);
 
 		return FunkyFrames.fromStrip(anim, imageLoaded, div);
     }
 
-    public static function returnSound(key:String, fromLevel:Bool = false, ?level:String = '', ?beepOnNull:Bool = true) {
-        var file:String;
-        if(fromLevel) file = buildLevelPath('$key.ogg', level); 
-        else file = getPath('$key.ogg');
+    public static function returnSound(key:String, fromLevel:Bool = false, ?beepOnNull:Bool = true) {
+        var file:String = getPath('$key.ogg', fromLevel); 
         
         var snd:Sound = null;
         if(FileSystem.exists(file))
@@ -83,11 +74,9 @@ class FunkyAssets {
         return snd;
     }
 
-    public static function returnImage(key:String, fromLevel:Bool = false, ?level:String = ''):FlxGraphic {
+    public static function returnImage(key:String, fromLevel:Bool = false):FlxGraphic {
         var bitmap:BitmapData = null;
-        var file:String;
-        if(fromLevel) file = buildLevelPath('sprites/$key.png', level); 
-        else file = getPath('$key.png');
+        var file:String = getPath('$key.png', fromLevel); 
         
         if (FileSystem.exists(file))
             bitmap = BitmapData.fromFile(file);
