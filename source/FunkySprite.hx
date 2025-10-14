@@ -1,9 +1,17 @@
 package;
 
+import flixel.FlxCamera;
+import flixel.graphics.frames.FlxFrame;
+import flixel.math.FlxRect;
+import flixel.math.FlxPoint;
+import flixel.util.FlxDestroyUtil;
 import flixel.FlxSprite;
 import FunkyAssets;
 
 class FunkySprite extends FlxSprite {
+	var _scaledFrameOffset:FlxPoint;
+    public var frameOffset(default, null):FlxPoint;
+
     var animOffsets:Array<Array<Float>>;
     var animScales:Array<Null<Float>>;
     var animData:Array<Dynamic>;
@@ -61,13 +69,14 @@ class FunkySprite extends FlxSprite {
 
     public function playAnim(anim:Int, force:Bool = true, reversed:Bool = false, frame:Int = 0) {
         animation.play(Std.string(anim), force, reversed, frame);
-        //updateHitbox();
 
         if (animOffsets[anim] != null)
-            offset.set(animOffsets[anim][0], animOffsets[anim][1]);
+            frameOffset.set(animOffsets[anim][0], animOffsets[anim][1]);
 
         if (!Math.isNaN(animScales[anim]))
             scale.set(animScales[anim] * baseScale, animScales[anim] * baseScale);
+
+        updateHitbox();
 
         //trace('[SPRITE] [\"$name\"] playing anim $anim | scale: ${scale.toString()}| offset: ${offset.toString()}');
     }
@@ -77,4 +86,67 @@ class FunkySprite extends FlxSprite {
 
     public function addScale(s:Float = 0)
 		animScales.push(s);
+
+    override function initVars() {
+        super.initVars();
+
+        frameOffset = FlxPoint.get();
+        _scaledFrameOffset = new FlxPoint();
+    }
+
+    override function destroy() {
+        super.destroy();
+        frameOffset = FlxDestroyUtil.put(frameOffset);
+        _scaledFrameOffset = FlxDestroyUtil.put(_scaledFrameOffset);
+    }
+
+    override function drawFrameComplex(frame:FlxFrame, camera:FlxCamera):Void {
+		final matrix = this._matrix;
+		frame.prepareMatrix(matrix, FlxFrameAngle.ANGLE_0, checkFlipX(), checkFlipY());
+		matrix.translate(-origin.x, -origin.y);
+
+        // muchisimas gracias
+        // https://github.com/CodenameCrew/cne-flixel/blob/38c0f548e678714b2885f710c2b4454fa2ce7058/flixel/FlxSprite.hx#L932
+        matrix.translate(-frameOffset.x, -frameOffset.y);
+
+		matrix.scale(scale.x, scale.y);
+		
+		if (bakedRotationAngle <= 0) {
+			updateTrig();
+			
+			if (angle != 0)
+				matrix.rotateWithTrig(_cosAngle, _sinAngle);
+		}
+		
+		getScreenPosition(_point, camera).subtract(offset);
+		_point.add(origin.x, origin.y);
+		matrix.translate(_point.x, _point.y);
+		
+		if (isPixelPerfectRender(camera)) {
+			matrix.tx = Math.floor(matrix.tx);
+			matrix.ty = Math.floor(matrix.ty);
+		}
+		
+		camera.drawPixels(frame, framePixels, matrix, colorTransform, blend, antialiasing, shader);
+	}
+
+    override function getScreenBounds(?newRect:FlxRect, ?camera:FlxCamera) {
+		if (newRect == null)
+			newRect = FlxRect.get();
+		
+		if (camera == null)
+			camera = getDefaultCamera();
+		
+		newRect.setPosition(x, y);
+		if (pixelPerfectPosition)
+			newRect.floor();
+		_scaledOrigin.set(origin.x * scale.x, origin.y * scale.y);
+        _scaledFrameOffset.set(frameOffset.x * scale.x, frameOffset.y * scale.y);
+		newRect.x += -Std.int(camera.scroll.x * scrollFactor.x) - offset.x + origin.x - _scaledOrigin.x;
+		newRect.y += -Std.int(camera.scroll.y * scrollFactor.y) - offset.y + origin.y - _scaledOrigin.y;
+		if (isPixelPerfectRender(camera))
+			newRect.floor();
+		newRect.setSize(frameWidth * Math.abs(scale.x), frameHeight * Math.abs(scale.y));
+		return newRect.getRotatedBounds(angle, _scaledOrigin, newRect, _scaledFrameOffset);
+	}
 }

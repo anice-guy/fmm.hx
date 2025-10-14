@@ -11,7 +11,7 @@ class FunkyBeat {
     public static var bpm:Int = 0;
     public static var crochet:Float = 0;
     public static var stepCrochet:Float = 0;
-    public static var songPos:Float;
+    public static var songPos:Float = -4000;
 
 	public static var curStep:Int;
 	public static var curBeat:Int;

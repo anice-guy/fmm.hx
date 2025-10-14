@@ -71,9 +71,14 @@ class PlayState extends FlxState {
 
 		camFollow = new FlxObject(0, 0, 1, 1);
 		add(camFollow);
-		FlxG.camera.follow(camFollow, LOCKON, 0.04);
+		FlxG.camera.follow(camFollow, LOCKON, 0.1);
 		FlxG.worldBounds.set(0, 0, FlxG.width, FlxG.height);
-		camFollow.setPosition(levelCams[0].x, levelCams[0].y);
+
+		var idx:Int = levelCams[1] != null ? 1 : 0;
+		camFollow.setPosition(levelCams[idx].x, levelCams[idx].y);
+		FlxG.camera.snapToTarget();
+		FlxG.camera.zoom = curZoom = 1 / Math.max(0, levelCams[idx].scale);
+
 
 		if (songNotes.length < 1) noteCheck();
 	}
@@ -89,7 +94,7 @@ class PlayState extends FlxState {
 
 
 	public function onSectionHit() {
-		FlxG.camera.zoom += 0.015;
+		FlxG.camera.zoom += 0.02;
 	}
 
 	function playAnimType(type, anim) {
@@ -134,22 +139,22 @@ class PlayState extends FlxState {
 		trace('executing event ${type} ${args}');
 		switch (type) {
 			case 'flash':
-				FlxG.camera.flash(0x33FFFFFF, 1);
+				FlxG.camera.flash(0x80FFFFFF, FunkyBeat.crochet/1000, null, true);
 			case 'shake':
-				FlxG.camera.shake(0.003, (FunkyBeat.crochet/1000));
+				FlxG.camera.shake(0.003, FunkyBeat.crochet/1000, null, true);
 			case 'camera':
 				switch (args[0]) {
 					case 'auto':
 						//none yet
 					case 'left':
 						camFollow.setPosition(levelCams[0].x, levelCams[0].y);
-						lvlzoom = (1-(levelCams[0].scale-1));
+						curZoom = 1 / Math.max(0, levelCams[0].scale);
 					case 'right':
 						camFollow.setPosition(levelCams[1].x, levelCams[1].y);
-						lvlzoom = (1-(levelCams[1].scale-1));
+						curZoom = 1 / Math.max(0, levelCams[1].scale);
 					default:
 						camFollow.setPosition(levelCams[Std.parseInt(args[0])].x, levelCams[Std.parseInt(args[0])].y);
-						lvlzoom = (1-(levelCams[Std.parseInt(args[0])].scale-1));
+						curZoom = 1 / Math.max(0, levelCams[Std.parseInt(args[0])].scale);
 				}
 
 			case 'changesprite':
@@ -181,12 +186,12 @@ class PlayState extends FlxState {
 	}
 
 	var cam:Int = 0;
-	var lvlzoom:Float = 1;
+	var curZoom:Float = 1;
 
 	override public function update(elapsed:Float) {
 		super.update(elapsed);
-
-		FlxG.camera.zoom = FlxMath.lerp(FlxG.camera.zoom, lvlzoom, 0.05);
+		FlxG.camera.zoom = FlxMath.lerp(FlxG.camera.zoom, curZoom, 0.1);
+		//trace(curZoom);
 		if (FlxG.sound.music != null)
 			FunkyBeat.update(FlxG.sound.music.time);
 
@@ -194,12 +199,6 @@ class PlayState extends FlxState {
 		eventCheck();
 
 		//EVERYTHING BELOW THIS LINE IS JUST FOR TESTING PURPOSES
-		if (FlxG.keys.justPressed.C) {
-			if (cam == 0) cam = 1 else cam = 0;
-			if (levelCams[cam] != null) camFollow.setPosition(levelCams[cam].x, levelCams[cam].y);
-			lvlzoom = (1-(levelCams[cam].scale-1));
-			trace(lvlzoom);
-		}
 
 		if (FlxG.keys.justPressed.SPACE)
 			@:privateAccess
