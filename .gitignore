@@ -1,4 +1,4 @@
-build/
-bundled-levels/
+build
+bundled-levels
 types.txt
 README.md
