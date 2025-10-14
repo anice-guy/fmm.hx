@@ -1,4 +1,6 @@
-# Funky Maker: Player!
+# Funky Clone
+Previously known as `Funky Maker: Player!`
+
 An attempt of porting/recreating [Funky Maker: Mobile!](https://play.google.com/store/apps/details?id=com.kingamescreator.fnmm) to desktop on HaxeFlixel
 
 ## todo
