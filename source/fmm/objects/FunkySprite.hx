@@ -6,7 +6,7 @@ import flixel.math.FlxRect;
 import flixel.math.FlxPoint;
 import flixel.util.FlxDestroyUtil;
 import flixel.FlxSprite;
-import FunkyAssets;
+import fmm.systems.FunkyAssets;
 
 class FunkySprite extends FlxSprite {
 	var _scaledFrameOffset:FlxPoint;

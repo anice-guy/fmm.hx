@@ -7,9 +7,9 @@ import flixel.sound.FlxSound;
 import flixel.FlxState;
 import flixel.FlxG;
 import sys.io.File;
-import FunkyAssets;
-import FunkyBeat;
-import FunkySprite;
+import fmm.systems.FunkyAssets;
+import fmm.systems.FunkyBeat;
+import fmm.objects.FunkySprite;
 import haxe.Json;
 
 class PlayState extends FlxState {
