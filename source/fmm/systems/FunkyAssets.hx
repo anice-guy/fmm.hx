@@ -1,31 +1,31 @@
-package;
+package fmm.systems;
 
 import haxe.Json;
 import sys.io.File;
-import flash.media.Sound;
+import openfl.media.Sound;
 import flixel.graphics.FlxGraphic;
 import flixel.system.FlxAssets;
 import openfl.display.BitmapData;
 import sys.FileSystem;
+import fmm.systems.FunkyTypes;
 
 using StringTools;
 
+
+
 class FunkyAssets {
-    public static var sprites:Map<String, FlxGraphic>;
-    public static var chartData:Dynamic = [];
-    public static var sceneData:Dynamic = [];
-    public static var eventData:Dynamic = [];
-    public static var lvlMusic:Sound;
-    public static var level:String;
+    //public static var sprites:Map<String, FlxGraphic>;
+
+    public static var levelData:LevelData;
 
     public static function loadLevelData(lvl:String):Void {
-        level = lvl;
-        chartData = levelJson('data');
-        sceneData = levelJson('scene');
+        levelData.name = lvl;
+        levelData.chart = levelJson('data');
+        levelData.scene = levelJson('scene');
         if (FileSystem.exists(getPath('evt.json', true)))
-            eventData = levelJson('evt');
+            levelData.events = levelJson('evt');
 
-        lvlMusic = returnSound('music', true);
+        levelData.music = returnSound('music', true);
     }
 
     public static function getPath(key:String = '', ?isLvl:Bool = false):String {
@@ -45,12 +45,6 @@ class FunkyAssets {
 
     public static function file(file:String):String
         return getPath(file);
-
-    public static function music(key:String):Sound
-        return returnSound('music/$key');
-
-    public static function image(key:String):FlxGraphic
-        return returnImage('images/$key');
 
     static public function spritesheet(key:String, anim:String, div:Int, fromLevel:Bool = false):FunkyFrames {
 		var imageLoaded:FlxGraphic = null;

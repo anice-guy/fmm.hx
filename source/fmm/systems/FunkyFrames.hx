@@ -1,4 +1,4 @@
-package;
+package fmm.systems;
 
 import flixel.graphics.frames.FlxFramesCollection;
 import flixel.graphics.FlxGraphic;

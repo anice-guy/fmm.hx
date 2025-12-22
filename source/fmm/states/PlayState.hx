@@ -1,4 +1,4 @@
-package;
+package fmm.states;
 
 import flixel.util.FlxSort;
 import flixel.math.FlxMath;

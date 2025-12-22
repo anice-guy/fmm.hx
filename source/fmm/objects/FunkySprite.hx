@@ -1,4 +1,4 @@
-package;
+package fmm.objects;
 
 import flixel.FlxCamera;
 import flixel.graphics.frames.FlxFrame;
