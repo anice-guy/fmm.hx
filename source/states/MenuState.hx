@@ -1,5 +1,6 @@
 package states;
 
+import flixel.FlxG;
 import flixel.text.FlxInputText;
 import flixel.tweens.FlxTween;
 import flixel.FlxSprite;
@@ -18,8 +19,8 @@ class MenuState extends FlxState {
     var levelInput:FlxInputText;
 
     override function create() {
-        super();
-        for (opt => i in menuOptions) {
+        super.create();
+        for (i => opt in menuOptions) {
             var button:FlxButton = new FlxButton(20, 30 + (10 * i), opt);
             button.scale.set(2, 2);
             button.updateHitbox();
