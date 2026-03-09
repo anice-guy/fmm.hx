@@ -1,6 +1,6 @@
 package states;
 
-class PlayState extends FlxState {
+class PlayState extends BeatAwareState {
 	override public function create() {
 		super.create();
 

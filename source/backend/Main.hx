@@ -3,11 +3,9 @@ package backend;
 import flixel.FlxGame;
 import openfl.display.Sprite;
 
-class Main extends Sprite
-{
-	public function new()
-	{
+class Main extends Sprite {
+	public function new() {
 		super();
-		addChild(new FlxGame(1920, 1080, states.MenuState));
+		addChild(new FlxGame(1920, 1080, states.TitleState));
 	}
 }

@@ -1,8 +1,8 @@
-package states;
+package states.menus;
 
-class LevelListState extends FlxState {
+class LevelListState extends BeatAwareState {
     override public function create() {
-        
+        super.create();
     }
     
     override public function update(elapsed) {

@@ -1,27 +1,25 @@
-package states;
+package states.menus;
 
 import flixel.group.FlxGroup;
 
-class MenuState extends FlxState {
-    var entries:Array<String> = [
+class MenuState extends BeatAwareState {
+    static public var entries:Array<String> = [
         'play',
         'options',
         'about',
         'quit'
     ];
 
-    var menuOptions:FlxTypedGroup<FlxText>;
-    var selectionIndex:Int = 0;
-    var madeSelection:Bool = false;
-
-    var cursor:FlxText;
-
-    var bg:FlxSprite;
+    public var menuOptions:FlxTypedGroup<FlxText>;
+    public var selectionIndex:Int = 0;
+    public var madeSelection:Bool = false;
+    public var cursor:FlxText;
+    public var cursorTween:FlxTween;
 
     override function create() {
         super.create();
 
-        bg = new FlxSprite(0, 0, FilePaths.engineImage('menuBackground'));
+        var bg:FlxSprite = new FlxSprite(0, 0, FilePaths.getImage('menuBackground'));
         bg.setGraphicSize(FlxG.width);
         bg.color = FlxColor.ORANGE;
         add(bg);
@@ -32,7 +30,8 @@ class MenuState extends FlxState {
         for (i => option in entries) {
             var opt:FlxText = new FlxText();
             opt.text = option;
-            opt.setFormat(FilePaths.engineFont('WenKai-Regular'), 62, FlxColor.WHITE, LEFT);
+            opt.setFormat(FilePaths.getFont('WenKai-Regular'), 62, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
+            opt.borderSize = 2;
             opt.y = 600 + ((opt.height + 15) * i);
             opt.x = (FlxG.width - opt.width) - 30;
             opt.ID = i;
@@ -41,15 +40,26 @@ class MenuState extends FlxState {
 
         cursor = new FlxText();
         cursor.text = '> ';
-        cursor.setFormat(FilePaths.engineFont('WenKai-Regular'), 62, FlxColor.YELLOW, LEFT);
+        cursor.setFormat(FilePaths.getFont('WenKai-Regular'), 62, FlxColor.YELLOW, LEFT, OUTLINE, FlxColor.BLACK);
+        cursor.borderSize = 2;
         cursor.x = (menuOptions.members[selectionIndex].x - cursor.width);
         cursor.y -= cursor.height;
         add(cursor);
 
         selectItem();
+
+        var black:FlxSprite = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+        black.scale.set(FlxG.width, FlxG.height);
+        black.updateHitbox();
+        add(black);
+
+        FlxTween.tween(black, {alpha: 0}, 1, {onComplete: (_)->{ black.destroy(); }});
     }
 
-    var cursorTween:FlxTween;
+    override function beatHit(beat) {
+        
+    }
+
     function selectItem(change:Int = 0) {
         selectionIndex = FlxMath.wrap(selectionIndex + change, 0, entries.length-1);
         var curText:FlxText = menuOptions.members[selectionIndex];
@@ -80,7 +90,7 @@ class MenuState extends FlxState {
 
             default:
                 madeSelection = false;
-                trace('Function unimplemented lol sorry');
+                trace('${entries[selectionIndex]}: menu aint done yet !');
         }
     }
 
